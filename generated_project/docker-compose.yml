@@ -1,93 +1,25 @@
-```yaml
 version: '3'
 
 services:
 
-  game-service:
+  web:
     build: 
       context: .
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - 80:3000
     environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=game_service
-      - REDIS_HOST=redis
+      - NODE_ENV=development
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-      
-  question-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
-    environment:
-      - POSTGRES_HOST=postgres  
-      - POSTGRES_DB=question_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-        
-  user-service:
-    build:
-      context: .
-      dockerfile: Dockerfile  
-    ports:
-      - "3002:3002"
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=user_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3002/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-        
-  postgres:
-    image: postgres:14
+      - db
+
+  db:
+    image: mysql:5.7
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - db-data:/var/lib/mysql
     environment:
-      - POSTGRES_DB=game_service,question_service,user_service
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    
-  redis:
-    image: redis:6
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-      
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_DATABASE=spacefractions
+
 volumes:
-  postgres-data:
-  redis-data:
-```
+  db-data:

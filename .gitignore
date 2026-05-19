@@ -1,4 +1,4 @@
-# NEVER upload these to GitHub
+# API keys — never commit
 .env
 *.env
 
@@ -6,7 +6,7 @@
 __pycache__/
 *.pyc
 
-# Virtual environment
+# Virtual environments
 venv/
 env/
 
@@ -18,5 +18,7 @@ env/
 .DS_Store
 Thumbs.db
 
-# Auto-generated
+# Agent intermediary files (root)
 architecture_parsed.json
+uml_parsed.json
+generation_plan.json

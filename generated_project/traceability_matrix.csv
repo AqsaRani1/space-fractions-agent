@@ -1,8 +1,5 @@
-Requirement ID,Type,Description,Component,Test Type,Status
-FR-1,Functional,User can play the game,Game Engine,Integration,Implemented
-FR-2,Functional,User can view their score,Scoreboard,Unit,Implemented 
-FR-3,Functional,Admin can update the quiz questions,Question Manager,Integration,Implemented
-NFR-1,Non-Functional,Application must respond in under 200ms,All,Performance,Implemented
-NFR-2,Non-Functional,Application must have 99.9% uptime,Infrastructure,Reliability,Implemented
-ASR-1,Architectural,User data must be durable,Data Layer,Security,Implemented
-ASR-2,Architectural,Application must have secure authentication,Authentication Service,Security,Implemented
+Requirement ID,Type,Description,Component,Implementation File,Test File,Status
+FR-1,FR,Play game,GameComponent,generated_project/gamecomponent/app.py,openapi.yaml,
+NFR-1,NFR,Performance,GameComponent,generated_project/gamecomponent/app.py,internal.proto,
+ASR-1,ASR,Data durability,QuestionComponent,generated_project/questioncomponent/app.js,sql/question_ddl.sql,
+ASR-2,ASR,Security,UserComponent,generated_project/usercomponent/app.js,,
