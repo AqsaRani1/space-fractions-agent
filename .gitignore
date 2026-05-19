@@ -1,0 +1,22 @@
+# NEVER upload these to GitHub
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Auto-generated
+architecture_parsed.json
