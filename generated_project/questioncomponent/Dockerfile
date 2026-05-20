@@ -1,19 +1,16 @@
-FROM node:16
+FROM node:14
 
-# Install dependencies
-RUN npm install -g npm@latest
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
 
-# Copy source code
+COPY package*.json ./
+RUN npm install
+
 COPY . .
 
 # Build the application
 RUN npm run build
 
-# Set the startup command
+# Run the application
 CMD ["npm", "start"]
 
-# Set the port to listen on
 EXPOSE 3000

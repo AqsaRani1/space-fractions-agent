@@ -1,18 +1,26 @@
 {
   "name": "gamecomponent",
   "version": "1.0.0",
-  "description": "Game logic and user interaction for Space Fractions",
+  "description": "Game component for Space Fractions",
   "main": "index.js",
-  "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.9.0",
-    "redis": "^4.6.4"
-  },
-  "devDependencies": {
-    "jest": "^29.4.3"
-  },
   "scripts": {
     "start": "node index.js",
     "test": "jest"
-  }
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.9.0",
+    "redis": "^4.6.3"
+  },
+  "devDependencies": {
+    "jest": "^29.4.3",
+    "supertest": "^6.3.3"
+  },
+  "keywords": [
+    "space-fractions",
+    "game",
+    "education"
+  ],
+  "author": "Space Fractions Team",
+  "license": "ISC"
 }

@@ -765,6 +765,7 @@ def main():
         sys.exit(1)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     # ── Pipeline ────────────────────────────────────────────────────────────────
 
     # Step 1: Read both input files

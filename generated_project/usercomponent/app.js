@@ -5,67 +5,67 @@ const bcrypt = require('bcrypt');
 const app = express();
 app.use(express.json());
 
-// Temporary in-memory store for user data
-let users = [];
+// Users data store
+const users = [];
 
-// User registration
-app.post('/register', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const existingUser = users.find((user) => user.username === username);
-    if (existingUser) {
-      return res.status(409).json({ error: 'Username already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = { username, password: hashedPassword };
-    users.push(newUser);
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Error registering user' });
-  }
-});
-
-// User login
+// User authentication
 app.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    const user = users.find((user) => user.username === username);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
+  const { username, password } = req.body;
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid username or password' });
-    }
-
-    const token = jwt.sign({ userId: user.id }, 'secret_key', { expiresIn: '1h' });
-    res.json({ token });
-  } catch (error) {
-    res.status(500).json({ error: 'Error logging in' });
+  // Find user
+  const user = users.find(u => u.username === username);
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid username or password' });
   }
+
+  // Verify password
+  const isValid = await bcrypt.compare(password, user.passwordHash);
+  if (!isValid) {
+    return res.status(401).json({ error: 'Invalid username or password' });
+  }
+
+  // Generate JWT token
+  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  res.json({ token });
 });
 
-// Middleware to verify JWT token
-const verifyToken = (req, res, next) => {
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+
+  // Check if user already exists
+  if (users.some(u => u.username === username)) {
+    return res.status(400).json({ error: 'Username already registered' });
+  }
+
+  // Hash password
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // Create new user
+  const newUser = { id: users.length + 1, username, passwordHash };
+  users.push(newUser);
+
+  res.status(201).json(newUser);
+});
+
+// Middleware to authenticate user
+const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  jwt.verify(token, 'secret_key', (err, decoded) => {
-    if (err) {
-      return res.status(403).json({ error: 'Failed to authenticate token' });
-    }
-    req.userId = decoded.userId;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = users.find(u => u.id === decoded.userId);
     next();
-  });
+  } catch (err) {
+    return res.status(403).json({ error: 'Invalid token' });
+  }
 };
 
-// Protect routes that require authentication
-app.get('/protected', verifyToken, (req, res) => {
-  res.json({ message: 'Access granted to protected resource' });
+// Authorize user
+app.get('/profile', authenticate, (req, res) => {
+  res.json(req.user);
 });
 
 module.exports = app;

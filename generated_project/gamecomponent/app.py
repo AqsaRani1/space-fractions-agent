@@ -1,44 +1,64 @@
 const express = require('express');
 const axios = require('axios');
+const { Client } = require('pg');
+const redis = require('redis');
 
 const app = express();
+app.use(express.json());
 
-// FR-1: Play game
-app.get('/play', async (req, res) => {
+// Connect to PostgreSQL
+const pgClient = new Client({
+  connectionString: 'postgres://user:password@localhost:5432/mydb'
+});
+pgClient.connect();
+
+// Connect to Redis
+const redisClient = redis.createClient({
+  host: 'localhost',
+  port: 6379
+});
+redisClient.on('error', (err) => console.log('Redis Client Error', err));
+redisClient.connect();
+
+// # FR-1: Play game
+app.post('/play', async (req, res) => {
   try {
-    // Get question from QuestionComponent
-    const question = await axios.get('http://question-component/api/question');
+    // Authenticate and authorize user
+    const authUser = await axios.post('/users/authenticate', req.body.credentials);
 
-    // Authenticate and authorize user via UserComponent
-    const user = await axios.get('http://user-component/api/user', {
-      headers: {
-        Authorization: req.headers.authorization,
-      },
-    });
+    // Retrieve a question
+    const question = await axios.get('/questions/random');
 
-    // Process game logic
-    const result = await processGameLogic(question, user);
+    // Process user's answer
+    const isCorrect = await processAnswer(authUser.id, question.id, req.body.answer);
 
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Save game state
+    await pgClient.query('INSERT INTO games (user_id, question_id, correct) VALUES ($1, $2, $3)', [authUser.id, question.id, isCorrect]);
+
+    res.status(200).json({ question, isCorrect });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'An error occurred while playing the game' });
   }
 });
 
-// NFR-1: Performance
-async function processGameLogic(question, user) {
-  // Implement game logic
-  const answer = await calculateFractionAnswer(question, user);
-  return { question, answer };
+async function processAnswer(userId, questionId, answer) {
+  // # NFR-1: Performance
+  const cachedAnswer = await redisClient.get(`question:${questionId}:answer`);
+  if (cachedAnswer) {
+    return answer === cachedAnswer;
+  }
+
+  // Retrieve the correct answer from the QuestionComponent
+  const { data: question } = await axios.get(`/questions/${questionId}`);
+  const isCorrect = answer === question.answer;
+
+  // Cache the correct answer
+  await redisClient.set(`question:${questionId}:answer`, question.answer, 'EX', 3600);
+
+  return isCorrect;
 }
 
-async function calculateFractionAnswer(question, user) {
-  // Implement fraction calculation logic
-  return 0.5;
-}
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`GameComponent service running on port ${port}`);
+app.listen(3000, () => {
+  console.log('GameComponent server started on port 3000');
 });

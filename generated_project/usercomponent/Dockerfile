@@ -1,18 +1,19 @@
 FROM node:14-alpine
 
-# ASR-2: Implement secure user authentication
-ENV NODE_ENV=production
-ENV PORT=3000
-
+# Install application dependencies
 WORKDIR /app
-
 COPY package*.json ./
 RUN npm ci --only=production
 
+# Copy application code
 COPY . .
 
+# Build production-ready app
 RUN npm run build
 
-EXPOSE 3000
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=3000
 
+# Start the application
 CMD ["npm", "start"]

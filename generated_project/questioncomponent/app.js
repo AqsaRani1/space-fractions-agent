@@ -1,66 +1,75 @@
 const { Pool } = require('pg');
 
-/**
+/** 
  * Main service for QuestionComponent
  * Responsible for question management and data persistence
  */
 class QuestionService {
   constructor() {
     this.pool = new Pool({
-      host: 'localhost',
-      port: 5432,
-      database: 'postgres',
       user: 'postgres',
-      password: 'password'
+      host: 'localhost',
+      database: 'spacefract',
+      password: 'changeme',
+      port: 5432,
     });
   }
 
-  async getQuestions() {
-    // FR-1: Get questions
+  /**
+   * Retrieves a question from the database
+   * @param {number} id - The ID of the question to retrieve
+   * @returns {Promise<Object>} The question data
+   */
+  async getQuestion(id) {
     try {
-      const result = await this.pool.query('SELECT * FROM questions');
-      return result.rows;
+      const result = await this.pool.query('SELECT * FROM questions WHERE id = $1', [id]);
+      return result.rows[0];
     } catch (err) {
-      console.error('Error getting questions:', err);
+      console.error('Error retrieving question:', err);
       throw err;
     }
   }
 
-  async createQuestion(question) {
-    // FR-2: Create new question
+  /**
+   * Creates a new question in the database
+   * @param {Object} questionData - The question data to create
+   * @returns {Promise<number>} The ID of the created question
+   */
+  async createQuestion(questionData) {
     try {
-      const { text, difficulty, answer } = question;
-      const result = await this.pool.query(
-        'INSERT INTO questions (text, difficulty, answer) VALUES ($1, $2, $3) RETURNING *',
-        [text, difficulty, answer]
-      );
-      return result.rows[0];
+      const { text, answer, difficulty } = questionData;
+      const result = await this.pool.query('INSERT INTO questions (text, answer, difficulty) VALUES ($1, $2, $3) RETURNING id', [text, answer, difficulty]);
+      return result.rows[0].id;
     } catch (err) {
       console.error('Error creating question:', err);
       throw err;
     }
   }
 
-  async updateQuestion(id, updates) {
-    // FR-3: Update existing question
+  /**
+   * Updates an existing question in the database
+   * @param {number} id - The ID of the question to update
+   * @param {Object} questionData - The updated question data
+   * @returns {Promise<void>}
+   */
+  async updateQuestion(id, questionData) {
     try {
-      const { text, difficulty, answer } = updates;
-      const result = await this.pool.query(
-        'UPDATE questions SET text = $1, difficulty = $2, answer = $3 WHERE id = $4 RETURNING *',
-        [text, difficulty, answer, id]
-      );
-      return result.rows[0];
+      const { text, answer, difficulty } = questionData;
+      await this.pool.query('UPDATE questions SET text = $1, answer = $2, difficulty = $3 WHERE id = $4', [text, answer, difficulty, id]);
     } catch (err) {
       console.error('Error updating question:', err);
       throw err;
     }
   }
 
+  /**
+   * Deletes a question from the database
+   * @param {number} id - The ID of the question to delete
+   * @returns {Promise<void>}
+   */
   async deleteQuestion(id) {
-    // FR-4: Delete question
     try {
-      const result = await this.pool.query('DELETE FROM questions WHERE id = $1 RETURNING *', [id]);
-      return result.rows[0];
+      await this.pool.query('DELETE FROM questions WHERE id = $1', [id]);
     } catch (err) {
       console.error('Error deleting question:', err);
       throw err;
